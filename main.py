@@ -1,46 +1,23 @@
-import matplotlib.pyplot as plt
-import numpy as np
+from src.solar import getSolarPosition
+from src.control import solarVector
 
 
-def drawSystem(solarVector, panelVector=None):
+azimuth, elevation = getSolarPosition()
 
-    fig = plt.figure(figsize=(8,8))
 
-    ax = fig.add_subplot(
-        111,
-        projection="3d"
-    )
+vector = solarVector(
+    azimuth,
+    elevation
+)
 
-    ax.quiver(
-        0,0,0,
-        solarVector[0],
-        solarVector[1],
-        solarVector[2],
-        color="orange",
-        linewidth=3,
-        label="Sol"
-    )
 
-    if panelVector is not None:
+print("Posición actual del Sol")
+print("----------------------")
 
-        ax.quiver(
-            0,0,0,
-            panelVector[0],
-            panelVector[1],
-            panelVector[2],
-            color="blue",
-            linewidth=3,
-            label="Panel"
-        )
+print(f"Azimut: {azimuth:.2f}°")
+print(f"Elevación: {elevation:.2f}°")
 
-    ax.set_xlim([-1,1])
-    ax.set_ylim([-1,1])
-    ax.set_zlim([0,1])
-
-    ax.set_xlabel("X")
-    ax.set_ylabel("Y")
-    ax.set_zlabel("Z")
-
-    ax.legend()
-
-    plt.show()
+print("\nVector solar:")
+print(f"X: {vector[0]:.4f}")
+print(f"Y: {vector[1]:.4f}")
+print(f"Z: {vector[2]:.4f}")
