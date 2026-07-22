@@ -1,65 +1,80 @@
-# main.py
 from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
 from pytz import timezone
-from src.control import calcularAngulosControl, solarVector
-from src.graficos import actualizarEscena3D, inicializarGrafica3D
-from src.solar import getSolarPosition
+from src.simulacion import ControlSimulacion
 
-print("=============================================")
-print("  CONFIGURACIÓN DE LA SIMULACIÓN SOLAR EPN   ")
-print("=============================================\n")
+from src.Control import calcularAngulosControl, solarVector
+from src.Solar import getSolarPosition
+from src.graficos import Simulador3D
 
-# 1. Ingreso de parámetros por el usuario (Requerimiento de la guía)
-fecha_str = input(
-    "Ingrese la fecha de simulación (AAAA-MM-DD) [Presione Enter para hoy]: "
-)
-if not fecha_str.strip():
-    fecha_base = datetime.now().date()
-else:
-    fecha_base = datetime.strptime(fecha_str.strip(), "%Y-%m-%d").date()
 
-duracion_horas = input("Ingrese la duración de la simulación en horas [Por defecto 12]: ")
-duracion_horas = int(duracion_horas.strip()) if duracion_horas.strip() else 12
+def iniciar_simulacion(
+        fecha_base,
+        duracion_horas,
+        callback=None,
+        frame=None,
+        control=None):
 
-# Definir la hora de inicio (por defecto a las 6:00 AM para capturar la salida del sol)
-zona_horaria = timezone("America/Guayaquil")
-dt_simulacion = datetime.combine(fecha_base, datetime.min.time()).replace(hour=6)
-dt_simulacion = zona_horaria.localize(dt_simulacion)
+    # Crear el simulador 3D dentro del Frame de Tkinter
+    simulador = Simulador3D(frame)
 
-print(f"\nIniciando simulación interactiva para el día: {fecha_base}")
-print(f"Intervalo visualizado: desde las 06:00 AM durante {duracion_horas} horas.\n")
+    zona = timezone("America/Guayaquil")
 
-# 2. Inicializar componentes gráficos
-plt.ion()  # Activar modo interactivo de matplotlib
-fig, ax = inicializarGrafica3D()
+    inicio = datetime.combine(
+        fecha_base,
+        datetime.min.time()
+    ).replace(hour=6)
 
-trayectoria_historica = []
-pasos_totales = duracion_horas * 4  # Muestreos cada 15 minutos
+    inicio = zona.localize(inicio)
 
-# 3. Bucle de ejecución temporal interactiva
-for paso in range(pasos_totales):
-    # Calcular la estampa de tiempo actual del paso
-    tiempo_actual = dt_simulacion + timedelta(minutes=paso * 15)
+    trayectoria = []
 
-    # Obtener Azimut y Elevación usando tu función original de solar.py
-    azimuth, elevation = getSolarPosition(date=tiempo_actual)
+    pasos = duracion_horas * 4
 
-    # Convertir a Vector usando tu función de control.py
-    vector_sol = solarVector(azimuth, elevation)
+    if control is None:
 
-    # Calcular los ángulos cinemáticos Pitch y Roll modificados
-    roll, pitch = calcularAngulosControl(vector_sol)
+        control = ControlSimulacion()
 
-    # Acumular la trayectoria si el sol está sobre el horizonte
-    if elevation >= 0:
-        trayectoria_historica.append(vector_sol)
+    for paso in range(pasos):
 
-    # Refrescar la pantalla 3D de manera interactiva
-    actualizarEscena3D(
-        ax, azimuth, elevation, vector_sol, roll, pitch, trayectoria_historica
-    )
+        if not control.esperar():
 
-print("Simulación completada con éxito.")
-plt.ioff()  # Desactivar modo interactivo
-plt.show()  # Dejar la ventana abierta al finalizar
+            break
+
+        tiempo = inicio + timedelta(minutes=15 * paso)
+
+        azimuth, elevation = getSolarPosition(
+            date=tiempo
+        )
+
+        vector = solarVector(
+            azimuth,
+            elevation
+        )
+
+        roll, pitch = calcularAngulosControl(
+            vector
+        )
+
+        if elevation >= 0:
+            trayectoria.append(vector)
+
+        simulador.actualizar(
+            azimuth,
+            elevation,
+            vector,
+            roll,
+            pitch,
+            trayectoria
+        )
+
+        if callback:
+
+            callback(
+                azimuth,
+                elevation,
+                roll,
+                pitch,
+                tiempo.strftime("%H:%M")
+            )
+
+    simulador.finalizar()
