@@ -1,63 +1,153 @@
-# Proyecto Seguidor Solar
+# Proyecto: Seguidor Solar de 2 Grados de Libertad
 
-Bienvenido al repositorio del **Proyecto Seguidor Solar de 2 Grados de Libertad**, desarrollado para calcular, simular y visualizar los ángulos de control necesarios para orientar un panel solar de forma perpendicular a la radiación solar incidente.
+## Descripción
 
-El sistema utiliza la posición del Sol, expresada mediante los ángulos de **azimut** y **elevación**, para determinar los ángulos mecánicos de control **roll** y **pitch** del panel.
+Este proyecto implementa un **seguidor solar de 2 grados de libertad (2 GDL)** capaz de calcular y simular la orientación óptima de un panel solar para mantenerlo **perpendicular a la radiación solar incidente**, maximizando así el aprovechamiento de la energía solar.
 
-## Componentes del Proyecto
+A partir de la posición del Sol, definida por los ángulos de **azimut (α)** y **elevación (θ)**, el sistema calcula los ángulos de control **roll** y **pitch**, genera la orientación del panel y verifica matemáticamente que el seguimiento sea correcto mediante el producto punto entre el vector solar y la normal del panel.
 
-### Código Fuente
+---
 
-Programa desarrollado en Python que permite:
+# Objetivos
 
-* Calcular la posición solar para una ubicación y fecha determinadas.
-* Obtener los ángulos de azimut y elevación del Sol.
-* Calcular los ángulos de control roll y pitch.
-* Simular el movimiento de un seguidor solar de 2 grados de libertad.
-* Verificar que el panel se mantenga perpendicular a la luz solar incidente.
-* Graficar de forma interactiva la trayectoria del Sol y la orientación del panel.
+- Calcular la posición solar para una fecha y ubicación determinadas.
+- Obtener los ángulos solares de **azimut** y **elevación**.
+- Calcular los ángulos de control **roll** y **pitch** de un seguidor solar de 2 GDL.
+- Simular el movimiento del panel solar en un entorno tridimensional.
+- Graficar la trayectoria del Sol y del panel.
+- Verificar que el panel permanezca perpendicular a la radiación solar incidente.
 
-### Desarrollo Matemático
+---
 
-Documento que explica la transformación de los ángulos solares en los ángulos de control del panel.
+# Características
 
-Se utilizan:
+El programa permite:
 
-* Sistemas de coordenadas tridimensionales.
-* Vectores unitarios.
-* Matrices de rotación.
-* Funciones trigonométricas.
-* Producto punto para verificar la perpendicularidad.
+- Seleccionar fecha de inicio de la simulación.
+- Configurar la duración de la simulación en días.
+- Configurar latitud, longitud y zona horaria.
+- Calcular automáticamente la posición solar utilizando **Pysolar**.
+- Calcular los ángulos de control **Roll** y **Pitch**.
+- Mostrar una simulación interactiva en 3D.
+- Visualizar la trayectoria del Sol y del panel.
+- Graficar Elevación/Pitch y Azimut/Roll.
+- Controlar la reproducción mediante slider y reproducción automática.
+- Verificar el seguimiento mediante el ángulo entre el vector solar y la normal del panel.
 
-### Informe Final
+---
 
-Documento que describe el problema, los objetivos, la metodología, el desarrollo matemático, la implementación del programa, las pruebas realizadas y los resultados obtenidos.
+# Desarrollo Matemático
 
-### Presentación
+El proyecto incluye la deducción completa de las ecuaciones utilizadas para el cálculo de los ángulos de control.
 
-Resumen visual del funcionamiento del seguidor solar, las ecuaciones utilizadas, la simulación y las conclusiones del proyecto.
+El documento contiene:
 
-### Video Demostrativo
+- Sistema de coordenadas Este–Norte–Cenit.
+- Construcción del vector solar.
+- Matrices de rotación.
+- Obtención de la normal del panel.
+- Deducción de las ecuaciones de **Roll** y **Pitch**.
+- Verificación mediante producto punto.
 
-Video de máximo 30 segundos en el que se muestra:
+📄 **Consultar:** `DESARROLLO_MATEMATICO.md`
 
-* El ingreso de la fecha y duración de la simulación.
-* El cálculo de la posición solar.
-* La trayectoria del Sol.
-* El movimiento del panel.
-* Los valores de azimut, elevación, pitch y roll.
-* La comprobación de perpendicularidad.
+---
 
-## Objetivo del Proyecto
+# Tecnologías utilizadas
 
-Desarrollar un programa que permita calcular los ángulos de control **pitch** y **roll** de un seguidor solar de 2 grados de libertad a partir de la posición del Sol.
+- Python 3
+- NumPy
+- Matplotlib
+- Tkinter
+- Pysolar
 
-El panel debe orientarse de manera que su vector normal coincida con la dirección de la radiación solar, con el propósito de mantener una incidencia perpendicular y maximizar el aprovechamiento de la energía solar.
+---
 
+# Estructura del proyecto
 
-## Miembros del Equipo
+```text
+Proyecto/
+│
+├── gui.py
+├── main.py
+├── requirements.txt
+├── README.md
+├── DESARROLLO_MATEMATICO.md
+│
+└── src/
+    ├── control.py
+    ├── graficos.py
+    ├── Solar.py
+    └── animation.py
+```
 
-* Danny Caiza
-* Alexander Mena
-* Melanie Peñafiel
-* Eduardo Verdezoto
+---
+
+# Funcionamiento
+
+El flujo del programa es el siguiente:
+
+```text
+Posición Solar
+        │
+        ▼
+Azimut y Elevación
+        │
+        ▼
+Vector Solar
+        │
+        ▼
+Roll y Pitch
+        │
+        ▼
+Vector Normal del Panel
+        │
+        ▼
+Simulación 3D
+        │
+        ▼
+Verificación (Producto Punto)
+```
+
+---
+
+# Ejecución
+
+Instalar las dependencias:
+
+```bash
+pip install -r requirements.txt
+```
+
+Ejecutar la interfaz gráfica:
+
+```bash
+python gui.py
+```
+
+También es posible ejecutar únicamente la simulación con Matplotlib:
+
+```bash
+python main.py
+```
+
+---
+
+# Evidencias del proyecto
+
+El proyecto incluye:
+
+- Desarrollo matemático.
+- Informe final.
+- Presentación.
+- Video demostrativo (30 segundos).
+- Código fuente.
+
+---
+
+# Integrantes
+
+- Danny Caiza
+- Alexander Mena
+- Melanie Peñafiel
+- Eduardo Verdezoto
