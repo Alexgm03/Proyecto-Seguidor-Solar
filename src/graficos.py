@@ -1,6 +1,7 @@
 # src/graficos.py
 import matplotlib.pyplot as plt
 import numpy as np
+from pysolar import elevation
 
 
 def inicializarGrafica3D():
@@ -192,58 +193,54 @@ def actualizarEscena3D(
     angulo_verificacion=None,
     forzar_refresco=True,
 ):
-    """Limpia la ventana y redibuja todos los componentes interactivos.
 
-    ``vector_panel`` es la normal real del panel calculada a partir de
-    (roll, pitch) mediante ``Control.vectorPanel`` -- ya no se reutiliza
-    ``vector_sol`` para dibujarlo, de modo que la gráfica realmente
-    demuestra que el pipeline posición-solar -> ángulos -> orientación
-    del panel funciona.
-
-    ``trayectoria_panel_puntos`` dibuja también la trayectoria recorrida
-    por la normal del panel (requerida por el enunciado: "dibujar la
-    trayectoria del sol Y del panel solar"); si el seguimiento es
-    perfecto coincide con la trayectoria solar.
-
-    ``angulo_verificacion`` es el ángulo (grados) entre el vector solar y
-    la normal del panel, calculado con producto punto
-    (``Control.anguloEntre``) -- debe ser ≈ 0° si el panel queda
-    perpendicular a la luz incidente.
-    """
     ax.cla()
     _formatear_ejes_3d(ax)
 
-    # 1. Graficar la trayectoria recorrida acumulada (puntos amarillos tenues)
+
+    # ==============================
+    # 1. Trayectoria del Sol
+    # ==============================
+
     if trayectoria_puntos is not None and len(trayectoria_puntos) > 0:
         pts = np.array(trayectoria_puntos)
+
         ax.plot(
-            pts[:, 0],
-            pts[:, 1],
-            pts[:, 2],
+            pts[:,0],
+            pts[:,1],
+            pts[:,2],
             color="gold",
             linestyle=":",
             alpha=0.7,
-            label="Trayectoria Solar",
+            label="Trayectoria Solar"
         )
 
-    # 1b. Trayectoria de la normal del panel (requerida por el enunciado:
-    #     "dibujar la trayectoria del sol Y del panel solar"). Coincide con
-    #     la trayectoria solar si el seguimiento es perfecto.
+
+    # ==============================
+    # 2. Trayectoria del panel
+    # ==============================
+
     if trayectoria_panel_puntos is not None and len(trayectoria_panel_puntos) > 0:
         pts_p = np.array(trayectoria_panel_puntos)
+
         ax.plot(
-            pts_p[:, 0],
-            pts_p[:, 1],
-            pts_p[:, 2],
+            pts_p[:,0],
+            pts_p[:,1],
+            pts_p[:,2],
             color="#8fd0ff",
             linestyle="--",
             alpha=0.6,
             linewidth=1.2,
-            label="Trayectoria del Panel",
+            label="Trayectoria Panel"
         )
 
-    # 2. Dibujar Vector del Sol (Flecha Naranja) si el sol está sobre el horizonte
+
+    # ==============================
+    # 3. Dibujar Sol solamente de día
+    # ==============================
+
     if elevation >= 0:
+
         ax.quiver(
             0,
             0,
@@ -252,70 +249,169 @@ def actualizarEscena3D(
             vector_sol[1],
             vector_sol[2],
             color="darkorange",
-            length=1.0,
-            label="Vector Solar ($\\vec{v}_{sol}$)",
+            length=1,
             linewidth=2.2,
+            label="Vector Solar"
         )
-        # Dibujar el Sol: halo tenue + núcleo brillante (mucho más visible
-        # que un solo scatter contra el fondo oscuro)
+
+
         ax.scatter(
-            vector_sol[0], vector_sol[1], vector_sol[2],
-            color="#ffcf6b", s=1600, alpha=0.18, edgecolors="none",
+            vector_sol[0],
+            vector_sol[1],
+            vector_sol[2],
+            color="#ffcf6b",
+            s=1600,
+            alpha=0.18
         )
+
+
         ax.scatter(
-            vector_sol[0], vector_sol[1], vector_sol[2],
-            color="#ffdd7a", s=420, alpha=0.9, edgecolors="none",
+            vector_sol[0],
+            vector_sol[1],
+            vector_sol[2],
+            color="#ffdd7a",
+            s=420,
+            alpha=0.9
         )
+
+
         ax.scatter(
-            vector_sol[0], vector_sol[1], vector_sol[2],
-            color="#fff6de", s=170, edgecolors="#f2a93b", linewidth=1.6,
+            vector_sol[0],
+            vector_sol[1],
+            vector_sol[2],
+            color="#fff6de",
+            s=170
         )
 
-        # 3. Placa física del panel: montada sobre un "poste" lejos del
-        #    origen, orientada según el vector_panel calculado a partir
-        #    de roll y pitch.
-        X_p, Y_p, Z_p, centro = generarMallaPanel(vector_panel)
 
-        # Poste/soporte: gris metálico, bien grueso, para que se lea como
-        # un elemento mecánico y no como "otro vector más"
-        ax.plot(
-            [0, centro[0]], [0, centro[1]], [0, centro[2]],
-            color="#9aa3b5", linewidth=6, solid_capstyle="round",
-            label="Poste / Normal del Panel",
+        estado_txt = (
+            f"Az: {azimuth:.1f}° | "
+            f"El: {elevation:.1f}°"
         )
-        ax.scatter(0, 0, 0, color="#9aa3b5", s=70)  # base del poste
 
-        # Placa del panel: superficie azul con marco claro bien contrastado
-        ax.plot_surface(
-            X_p,
-            Y_p,
-            Z_p,
-            color="#2f6fb3",
-            alpha=0.92,
-            shade=False,
-            linewidth=0,
-            antialiased=False,
-        )
-        # Marco/borde de la placa remarcado (perímetro completo)
-        ax.plot(X_p[0, :], Y_p[0, :], Z_p[0, :], color="#eaf4ff", linewidth=2)
-        ax.plot(X_p[-1, :], Y_p[-1, :], Z_p[-1, :], color="#eaf4ff", linewidth=2)
-        ax.plot(X_p[:, 0], Y_p[:, 0], Z_p[:, 0], color="#eaf4ff", linewidth=2)
-        ax.plot(X_p[:, -1], Y_p[:, -1], Z_p[:, -1], color="#eaf4ff", linewidth=2)
-        ax.scatter(*centro, color="#eaf4ff", s=55, edgecolors="#2f6fb3", linewidth=1.2, label="Panel Solar")
 
-        ax.set_title("Simulación Interactiva Solar", color=FG, fontsize=13, pad=14)
-        estado_txt = f"Az: {azimuth:.1f}°  |  El: {elevation:.1f}°"
     else:
-        ax.set_title("Simulación Interactiva Solar", color=FG, fontsize=13, pad=14)
-        estado_txt = "[ El Sol está oculto (Noche) ]"
 
-    # Un único cuadro de información (antes esto y el título se superponían)
-    info_panel = f"{estado_txt}\n\nÁngulos de Control:\n• Roll (Giro Norte): {roll:.2f}°\n• Pitch (Giro Este): {pitch:.2f}°"
+        estado_txt = (
+            "[ Noche ]\n"
+            "Panel en posición de parqueo"
+        )
+
+
+    # ==============================
+    # 4. Posición del panel
+    # ==============================
+
+    if elevation >= 0:
+
+        panel_actual = vector_panel
+
+    else:
+
+        # posición de seguridad nocturna
+        panel_actual = np.array([0,0,1])
+
+
+    X_p, Y_p, Z_p, centro = generarMallaPanel(
+        panel_actual
+    )
+
+
+    # Soporte
+
+    ax.plot(
+        [0,centro[0]],
+        [0,centro[1]],
+        [0,centro[2]],
+        color="#9aa3b5",
+        linewidth=6
+    )
+
+
+    ax.scatter(
+        0,
+        0,
+        0,
+        color="#9aa3b5",
+        s=70
+    )
+
+
+    # Superficie del panel
+
+    ax.plot_surface(
+        X_p,
+        Y_p,
+        Z_p,
+        color="#2f6fb3",
+        alpha=0.92,
+        shade=False
+    )
+
+
+    # Bordes del panel
+
+    ax.plot(
+        X_p[0,:],
+        Y_p[0,:],
+        Z_p[0,:],
+        color="#eaf4ff",
+        linewidth=2
+    )
+
+    ax.plot(
+        X_p[-1,:],
+        Y_p[-1,:],
+        Z_p[-1,:],
+        color="#eaf4ff",
+        linewidth=2
+    )
+
+    ax.plot(
+        X_p[:,0],
+        Y_p[:,0],
+        Z_p[:,0],
+        color="#eaf4ff",
+        linewidth=2
+    )
+
+    ax.plot(
+        X_p[:,-1],
+        Y_p[:,-1],
+        Z_p[:,-1],
+        color="#eaf4ff",
+        linewidth=2
+    )
+
+
+    ax.scatter(
+        *centro,
+        color="#eaf4ff",
+        s=55,
+        label="Panel Solar"
+    )
+
+
+    # ==============================
+    # Información
+    # ==============================
+
+    info_panel = (
+        f"{estado_txt}\n\n"
+        "Ángulos de Control:\n"
+        f"• Roll: {roll:.2f}°\n"
+        f"• Pitch: {pitch:.2f}°"
+    )
+
+
     if angulo_verificacion is not None:
-        if angulo_verificacion == angulo_verificacion:  # descarta NaN sin importar math/np
-            info_panel += f"\n\nVerificación ⊥ (S·n): {angulo_verificacion:.3f}°"
-        else:
-            info_panel += "\n\nVerificación ⊥ (S·n): — (sin seguimiento)"
+
+        info_panel += (
+            f"\n\nVerificación ⊥:\n"
+            f"{angulo_verificacion:.3f}°"
+        )
+
+
     ax.text2D(
         -0.08,
         0.96,
@@ -323,11 +419,22 @@ def actualizarEscena3D(
         transform=ax.transAxes,
         fontsize=10.5,
         color="#1a1002",
-        verticalalignment="top",
-        bbox=dict(facecolor="#f2a93b", alpha=0.9, edgecolor="none"),
+        bbox=dict(
+            facecolor="#f2a93b",
+            alpha=0.9,
+            edgecolor="none"
+        )
     )
 
-    ax.legend(loc="lower left", fontsize=9, facecolor=BG, labelcolor=FG, edgecolor=GRID)
+
+    ax.legend(
+        loc="lower left",
+        fontsize=9,
+        facecolor=BG,
+        labelcolor=FG,
+        edgecolor=GRID
+    )
+
 
     if forzar_refresco:
-        plt.pause(0.05)  # Breve pausa para forzar el refresco de la animación interactiva (modo standalone)
+        plt.pause(0.05)
