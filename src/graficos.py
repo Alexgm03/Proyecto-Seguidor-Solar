@@ -413,12 +413,13 @@ def actualizarEscena3D(
 
 
     ax.text2D(
-        -0.08,
-        0.96,
+        0.02,
+        0.93,
         info_panel,
         transform=ax.transAxes,
         fontsize=10.5,
         color="#1a1002",
+        verticalalignment="top",
         bbox=dict(
             facecolor="#f2a93b",
             alpha=0.9,
