@@ -25,15 +25,7 @@ def generar_frames(
     tz_horas=TZ_DEFECTO,
     paso_min=10,
 ):
-    """Calcula todos los cuadros de la simulación (sin dibujar nada).
-
-    Al no llamar a matplotlib, esta función es segura para ejecutarse
-    en un hilo secundario (como hace ``gui.py``); el dibujo se hace
-    siempre desde el hilo principal.
-
-    ``dias`` permite simular varios días consecutivos (antes solo se
-    podían pedir horas dentro de un mismo día).
-    """
+    """Calcula todos los cuadros de la simulación (sin dibujar nada)."""
 
     zona = FixedOffset(int(tz_horas * 60))
 
@@ -45,6 +37,10 @@ def generar_frames(
 
     frames = []
 
+    # Posición de parqueo
+    ROLL_PARQUEO = 150.0
+    PITCH_PARQUEO = -19.0
+
     for dia in range(dias):
 
         inicio_dia = inicio + timedelta(days=dia)
@@ -52,7 +48,7 @@ def generar_frames(
         for paso in range(pasos_por_dia):
 
             tiempo_actual = inicio_dia + timedelta(
-                minutes=paso_min * paso
+                minutes=paso * paso_min
             )
 
             azimuth, elevation = getSolarPosition(
@@ -66,26 +62,61 @@ def generar_frames(
                 elevation
             )
 
-            roll, pitch = calcularAngulosControl(
-                vector_sol
+            # =============================
+            # Seguimiento normal
+            # =============================
+            if elevation >= 0:
+
+                roll, pitch = calcularAngulosControl(
+                    vector_sol
+                )
+
+                vector_panel = vectorPanel(
+                    roll,
+                    pitch
+                )
+
+                angulo_verificacion = anguloEntre(
+                    vector_sol,
+                    vector_panel
+                )
+
+            # =============================
+            # Posición de parqueo
+            # =============================
+            else:
+
+                roll = ROLL_PARQUEO
+                pitch = PITCH_PARQUEO
+
+                vector_panel = vectorPanel(
+                    roll,
+                    pitch
+                )
+
+                angulo_verificacion = float("nan")
+
+            frames.append(
+                dict(
+                    tiempo=tiempo_actual,
+                    azimuth=azimuth,
+                    elevation=elevation,
+                    vector_sol=vector_sol,
+                    vector_panel=vector_panel,
+                    roll=roll,
+                    pitch=pitch,
+                    angulo_verificacion=angulo_verificacion,
+                )
             )
 
-            vector_panel = vectorPanel(roll, pitch)
-            angulo_verificacion = anguloEntre(vector_sol, vector_panel) if elevation >= 0 else float("nan")
-
-            frames.append(dict(
-                tiempo=tiempo_actual,
-                azimuth=azimuth,
-                elevation=elevation,
-                vector_sol=vector_sol,
-                vector_panel=vector_panel,
-                roll=roll,
-                pitch=pitch,
-                angulo_verificacion=angulo_verificacion,
-            ))
+    print("\n========== RANGO DE ÁNGULOS ==========")
+    print(f"Pitch mínimo : {min(f['pitch'] for f in frames):.2f}°")
+    print(f"Pitch máximo : {max(f['pitch'] for f in frames):.2f}°")
+    print(f"Roll mínimo  : {min(f['roll'] for f in frames):.2f}°")
+    print(f"Roll máximo  : {max(f['roll'] for f in frames):.2f}°")
+    print("======================================\n")
 
     return frames
-
 
 def iniciar_simulacion(
     fecha_base,
